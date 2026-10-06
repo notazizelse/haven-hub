@@ -2,6 +2,14 @@
 
 A hub keeps working when the website is newer than its backend: new pages appear once the hub's `Code.gs` lists the feature. To update a Google Sheet hub, paste the new `Code.gs` and deploy a **new version** of the same deployment ([setup.md → Updating](setup.md#updating)); on your own server run `hubctl deploy`.
 
+## 5.1.1 — 2026-10-06
+
+- **Errors say what is actually wrong.** When Google answers with its own web page instead of the hub's data, the website now reads that page and names the cause: permissions need renewing, the code wasn't saved before deploying, the link points to a hub ID that doesn't exist, Google's time limit or quotas, or a sign-in page (access not set to *Anyone*). Anything else quotes Google's words and points to *Apps Script → Executions*. Before, every case said *"check that the web app is deployed with access Anyone"*, which was usually not the problem. The full page is logged in the browser console.
+- **Settings → About this hub → Test the hub** (was *Run a health check*): tests reading and saving separately (they travel differently, so one can fail while the other works), shows the hub ID this page uses, and warns when people's links and invites use a different one.
+- Backend: `doGet` / `doPost` always answer with JSON, even if writing the answer fails, so Google never replaces it with an error page.
+- Long error messages stay on screen long enough to read.
+- setup.md → Troubleshooting lists each message and its fix.
+
 ## 5.1.0 — 2026-10-04
 
 - **Ambassadors.** Students who bring their school, each with a code and a link `<hub>/r/CODE` (a QR code on their poster). New page *Ambassadors* for everyone on the team: whoever adds an ambassador is their **buddy** and looks after them; leads see and change them all. *Add several*, *Send their page* (a ready Telegram message in the hub's languages), *Poster*, pause / left, channel codes (`IG`, `UZ1`… for a place rather than a person), *Sunday leaderboard* (top 5, first names only, to copy into the ambassadors' group). Applications has a new interest *School ambassador* and a *Make ambassador* button. The Overview shows an Ambassadors card.

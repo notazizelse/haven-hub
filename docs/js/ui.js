@@ -86,7 +86,7 @@ export function toast(msg, kind) {
   el.className = 'toast ' + (kind || 'ok'); el.setAttribute('role', kind === 'err' ? 'alert' : 'status');
   el.innerHTML = `${icon(kind === 'err' ? 'alert' : 'check')}<span>${esc(msg)}</span>`;
   box.appendChild(el);
-  setTimeout(() => { el.classList.add('out'); setTimeout(() => el.remove(), 250); }, kind === 'err' ? 6000 : 2800);
+  setTimeout(() => { el.classList.add('out'); setTimeout(() => el.remove(), 250); }, kind === 'err' ? Math.min(20000, Math.max(6000, String(msg).length * 70)) : 2800); // long errors stay long enough to read
 }
 export async function copy(text, label) {
   try { await navigator.clipboard.writeText(text); toast(label || 'Copied.'); return true; }

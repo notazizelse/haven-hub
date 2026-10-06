@@ -127,7 +127,7 @@ export function settings(ctx) {
       ${field({ label: 'Website address', name: 'site_url', type: 'url', value: S.site_url, hint: 'Change it only if you run your own copy of the website.' })}
       ${field({ label: 'Hub ID (web-app deployment)', name: 'hub_id', value: S.hub_id, hint: 'Part of every personal link. Filled in automatically.' })}`,
       `${D.sheetUrl ? `<a class="btn ghost" href="${esc(D.sheetUrl)}" target="_blank" rel="noopener">${icon('external')} Open the Google Sheet</a>` : ''}<button class="btn ghost" type="button" id="exp">${icon('download')} Export all data</button>`)}
-    <div class="card"><div class="card-h"><h3>About this hub</h3><button class="btn ghost sm" id="hchk">Run a health check</button></div>
+    <div class="card"><div class="card-h"><div><h3>About this hub</h3><div class="sub">Something not saving, or an odd error? The check tests reading and saving and tells you what to fix.</div></div><button class="btn ghost sm" id="hchk">Test the hub</button></div>
       <p class="small muted" style="margin:0">Backend v${esc(D.version)} · website latest v${esc(CFG.latestBackend || '?')} · <a href="${esc(CFG.repo || '#')}" target="_blank" rel="noopener">Haven Hub on GitHub</a></p><div id="hout" class="small" style="margin-top:8px"></div></div>
   </div></div>`;
 
@@ -171,11 +171,19 @@ export function settings(ctx) {
   };
   $('#tmail').onclick = async e => { const btn = e.currentTarget; busy(btn, true, 'Sending…'); const r = await ctx.api.post('bottest', { target: 'email' }); busy(btn, false); toast(r.detail || r.error, r.ok ? 'ok' : 'err'); };
   $('#hchk').onclick = async e => {
-    const btn = e.currentTarget;
-    busy(btn, true, 'Checking…'); const r = await ctx.api.get('health'); busy(btn, false);
-    if (!r.ok) return toast(r.error, 'err');
-    const has = f => r.triggers.includes(f), row = (ok, t) => `<div>${ok ? '✅' : '⚠️'} ${t}</div>`, sv = r.server;
-    $('#hout').innerHTML = (sv
+    const btn = e.currentTarget, A = ctx.api, id = A.hub(), row = (ok, t) => `<div>${ok ? '✅' : '⚠️'} ${t}</div>`;
+    busy(btn, true, 'Testing…');
+    // Reading and saving travel differently (GET vs POST), so test both — a hub can answer one and fail the other.
+    const [rd, sv0] = [await A.getFrom(id, 'ping'), await A.postTo(id, 'ping')];
+    const r = rd.ok && sv0.ok ? await A.get('health') : { ok: false };
+    busy(btn, false);
+    const sheetHub = !A.isServerHub() && !A.DEMO, ids = sheetHub && r.ok && r.hubId && r.hubId !== id;
+    const top = row(rd.ok, rd.ok ? 'Reading works' : 'Reading fails: ' + esc(rd.error)) + row(sv0.ok, sv0.ok ? 'Saving works' : 'Saving fails: ' + esc(sv0.error)) +
+      (sheetHub ? `<div class="muted">This page talks to hub <code>${esc(A.shortId(id))}</code></div>` : '') +
+      (ids ? row(false, `People's links and invites use a different hub ID (<code>${esc(A.shortId(r.hubId))}</code>). If that is an old deployment, put <code>${esc(id)}</code> in <b>Hub & data → Hub ID</b> and save.`) : '');
+    if (!r.ok) { $('#hout').innerHTML = top + (rd.ok && sv0.ok ? row(false, esc(r.error || 'The health check failed.')) : ''); return; }
+    const has = f => r.triggers.includes(f), sv = r.server;
+    $('#hout').innerHTML = top + (sv
       ? row(true, `Running on your own server · up ${sv.uptimeMin} min`) + row(sv.email, sv.email ? 'Email is set up' : 'Email not set up — SMTP_USER / SMTP_PASS in ~/haven/.env') +
         row(!sv.outbox.failed24h, `${sv.outbox.pending} message(s) waiting to send · ${sv.outbox.failed24h} failed today`) + row(!!sv.lastBackup, sv.lastBackup ? 'Last backup ' + esc(sv.lastBackup.slice(0, 16).replace('T', ' ')) : 'No backup yet (runs nightly)')
       : row(has('eveningReminders'), `Daily reminders ${has('eveningReminders') ? 'on' : 'off — in the Sheet: Haven Hub → Turn on reminders'}`) +

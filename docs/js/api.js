@@ -106,22 +106,65 @@ export function forgetHub() { signOut(); store.del('hh:last'); }
 export function cached() { const s = session(), c = !DEMO && store.json('hh:c:' + hubId, null); return c && s && c.me && c.me.key === s.u ? c : null; }
 export function cache(D) { if (!DEMO) store.set('hh:c:' + hubId, JSON.stringify(D)); }
 
-async function parse(r) {
+/** Short form of a hub ID for messages: AKfycbx1…9fQ2kA. */
+export const shortId = id => String(id || '').length > 16 ? String(id).slice(0, 8) + '…' + String(id).slice(-6) : String(id || '');
+/** The visible text of an HTML page (Google's error pages are small). */
+export function pageText(html) {
+  return String(html || '').replace(/<(head|script|style)[\s\S]*?<\/\1>/gi, ' ').replace(/<[^>]+>/g, ' ')
+    .replace(/&quot;/g, '"').replace(/&#39;|&#x27;/g, "'").replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&')
+    .replace(/\s+/g, ' ').trim();
+}
+const REDEPLOY = 'Deploy → Manage deployments → ✏️ → Version: New version → Deploy';
+/** Google's own pages, recognised by their text → what went wrong and what the hub owner does about it. First match wins. */
+const GOOGLE_PAGES = [
+  ['auth', /authori[sz]ation is required|requires? (your )?(authori[sz]ation|permission)|needs (your )?permission|do not have permission to call|required permissions/i,
+    () => `The hub needs Google permissions again. The hub owner: in Apps Script pick installTriggers at the top, press Run and allow everything, then ${REDEPLOY}.`],
+  ['nocode', /script function not found|did not return anything|completed but did not return/i,
+    () => `The hub's code wasn't saved when it was deployed. The hub owner: paste Code.gs into Apps Script, press Ctrl+S, then ${REDEPLOY}.`],
+  ['notfound', /unable to open the file|file you have requested does not exist|page not found|requested url was not found|\b404\b/i,
+    id => `There is no hub at the ID this page uses (${shortId(id)}). Open the hub from a fresh link, or compare that ID with the Deployment ID in Apps Script → Deploy → Manage deployments.`],
+  ['timeout', /exceeded maximum execution time|timed out|time ?out/i,
+    () => 'Google stopped the hub because it took too long. Wait a minute, refresh and check whether your change was saved before trying again.'],
+  ['busy', /too many simultaneous|service invoked too many times|too many (requests|times)|quota|rate limit/i,
+    () => "The hub hit one of Google's limits (too many requests, or today's quota). Try again in a few minutes."],
+];
+/** Google answered with a web page instead of the hub's JSON: say why, in plain words, and keep the page in the console for whoever debugs it. */
+export function explainPage(html, status, id) {
+  const text = pageText(html), google = /script\.google|googleusercontent|google/i.test(String(html).slice(0, 4000)) || /AKfy/.test(String(id || ''));
+  const said = text.replace(/^((google (apps script|drive))|error)\s*/gi, '').replace(/^((google (apps script|drive))|error)\s*/gi, '').replace(/\b(sign in|learn more|report abuse)\b/gi, '').replace(/\s+/g, ' ').trim().slice(0, 140);
+  try { console.warn('[Haven Hub] the hub answered with a web page instead of data', { hub: id, status, text: text.slice(0, 2000) }); } catch (e) { /* no console */ }
+  // A Google sign-in page = the deployment isn't open to "Anyone".
+  if (/ServiceLogin|accounts\.google\.com\/(v\d\/)?signin|<title>\s*sign in/i.test(html))
+    return { ok: false, code: 'network', cause: 'access', status, error: 'Google asked for a sign-in instead of answering. The hub owner: set the web app\'s Who has access to Anyone (Deploy → Manage deployments → ✏️).' };
+  const hit = GOOGLE_PAGES.find(([, re]) => re.test(text));
+  if (hit) return { ok: false, code: 'network', cause: hit[0], status, error: hit[2](id) + (hit[0] === 'notfound' || !said ? '' : ` (Google said: “${said}”)`) };
+  return { ok: false, code: 'network', cause: 'page', status,
+    error: (google ? `Google sent an error page instead of the hub's data (HTTP ${status}). The hub owner can see why in Apps Script → Executions.` : `The hub's server sent a web page instead of data (HTTP ${status}).`)
+      + (said ? ` It said: “${said}”` : '') };
+}
+async function parse(r, id) {
   const txt = await r.text();
   try { return JSON.parse(txt); }
-  catch (e) { return { ok: false, code: 'network', error: /<html/i.test(txt) ? 'The hub answered with a web page instead of data. Check that the web app is deployed with access "Anyone".' : 'Unexpected answer from the hub.' }; }
+  catch (e) {
+    if (/<html|<!doctype/i.test(txt)) return explainPage(txt, r.status, id);
+    return { ok: false, code: 'network', cause: 'odd', status: r.status, error: `Unexpected answer from the hub (HTTP ${r.status}).` };
+  }
 }
-const offline = { ok: false, code: 'network', error: 'Could not reach the hub. Check your internet connection and try again.' };
+const offline = () => (typeof navigator !== 'undefined' && navigator.onLine === false)
+  ? { ok: false, code: 'network', cause: 'offline', error: 'You seem to be offline. Check your internet connection and try again.' }
+  : { ok: false, code: 'network', cause: 'unreachable', error: 'Could not reach the hub. Check your internet. If it keeps happening, the hub owner should check that the web app\'s Who has access is Anyone.' };
 
 export async function getFrom(id, action, extra) {
   const q = Object.assign({ action }, extra || {});
   if (DEMO) return demoCall('GET', q);
-  try { return await parse(await fetch(urlFor(id) + '?' + new URLSearchParams(q), { cache: 'no-store' })); } catch (e) { return offline; }
+  let r; try { r = await fetch(urlFor(id) + '?' + new URLSearchParams(q), { cache: 'no-store' }); } catch (e) { return offline(); }
+  try { return await parse(r, id); } catch (e) { return offline(); }
 }
 export async function postTo(id, action, body) {
   const b = Object.assign({ action }, body || {});
   if (DEMO) return demoCall('POST', b);
-  try { return await parse(await fetch(urlFor(id), { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(b) })); } catch (e) { return offline; }
+  let r; try { r = await fetch(urlFor(id), { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(b) }); } catch (e) { return offline(); }
+  try { return await parse(r, id); } catch (e) { return offline(); }
 }
 const withKey = o => { const s = session(); return Object.assign({}, o, s ? { u: s.u, t: s.t } : {}); };
 /** The hub moved to its own server: forward this person there, with their key. */
