@@ -133,7 +133,7 @@ async function load(opts = {}) {
 }
 function fatal(msg, code) {
   root.innerHTML = `<div class="wiz"><div class="card"><h2>Can't open the Team Hub</h2><p class="muted">${esc(msg)}</p>
-    ${code === 'network' ? '<p class="small muted">If this keeps happening, the hub\'s owner should check that the web app is deployed with access <b>Anyone</b>.</p>' : ''}
+    ${code === 'network' ? `<p class="small muted">If this keeps happening, send a screenshot of this page to the hub's owner. This page uses hub <code>${esc(api.shortId(api.hub()))}</code>.</p>` : ''}
     <div class="row"><button class="btn primary" id="retry">${icon('refresh')} Try again</button><button class="btn ghost" id="other">Sign in differently</button></div></div></div>`;
   $('#retry').onclick = () => location.reload();
   $('#other').onclick = () => { api.signOut(); ctx.D = null; location.hash = '#/signin'; render(); };

@@ -83,7 +83,7 @@ export function setup(root, ctx) {
     busy(b, true, 'Checking…');
     const r = await getFrom(hub, 'ping');
     busy(b, false);
-    if (!r.ok || !r.version) { out.innerHTML = `<p class="errline">${r.version === undefined && r.ok === false && !r.code ? 'The hub answered, but it runs old code. Paste the latest Code.gs, then Deploy → Manage deployments → New version.' : esc(r.error || 'No answer from that URL.')}</p><p class="small muted">Check: Who has access = <b>Anyone</b>, and you copied the <b>/exec</b> URL (not the /dev one).</p>`; return; }
+    if (!r.ok || !r.version) { out.innerHTML = `<p class="errline">${r.version === undefined && r.ok === false && !r.code ? 'The hub answered, but it runs old code. Paste the latest Code.gs, then Deploy → Manage deployments → New version.' : esc(r.error || 'No answer from that URL.')}</p>${r.code === 'network' && r.cause && r.cause !== 'unreachable' && r.cause !== 'access' ? '' : '<p class="small muted">Check: Who has access = <b>Anyone</b>, and you copied the <b>/exec</b> URL (not the /dev one).</p>'}`; return; }
     if (r.ready) { out.innerHTML = `<div class="banner">${icon('alert')}<div>This hub is already set up${r.event ? ' for <b>' + esc(r.event.name) + '</b>' : ''}. Open your admin link — or in the Sheet use <b>Haven Hub → Show admin links</b>.</div></div>`; return; }
     st.hub = hub; out.innerHTML = `<p class="okline">${icon('check')} Connected — backend v${esc(r.version)}</p>`; save(); setTimeout(() => go(3), 500);
   };

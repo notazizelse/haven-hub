@@ -315,8 +315,13 @@ Most people on a Haven team are 13–18, so the hub is built to collect as littl
 | *"This link doesn't work (any more)"* | The link was reset, or the person was removed. Send a fresh one from **People → ⋯ → Get link** |
 | *"This invite was used already"* / *"has expired"* | Send a new one: **People → ⋯ → New invite & message**. Someone who already joined signs in the way they chose then |
 | The Inbox stays empty | In the watcher's Apps Script project: **Executions** shows the error. *Wrong feed key* = paste the current one from **Settings → Connections** |
+| Something won't save, or an error you don't understand | **Settings → About this hub → Test the hub.** It tests reading *and* saving separately, shows the hub ID this page uses, and says what to fix |
 | *"Could not reach the hub"* | Check your internet. If it keeps happening: the deployment must be **Who has access: Anyone**, and the URL must end in `/exec` |
-| *"The hub answered with a web page instead of data"* | Same as above. Also make sure you deployed a **Web app**, not an API executable |
+| *"The hub needs Google permissions again"* | In Apps Script, pick `installTriggers` in the function list at the top, press **Run** and allow everything. Then **Deploy → Manage deployments → ✏️ → Version: New version → Deploy** |
+| *"The hub's code wasn't saved when it was deployed"* | Paste `Code.gs`, press **Ctrl+S**, then deploy a **New version** as above |
+| *"There is no hub at the ID this page uses"* | The link has an old or wrong deployment ID. Compare it with the ID in **Deploy → Manage deployments**, and open the hub from a fresh link. If *Test the hub* says people's links use a different ID, fix **Settings → Hub & data → Hub ID** |
+| *"Google stopped the hub because it took too long"* / *"one of Google's limits"* | Wait a minute and refresh. Check whether your change was saved before you try again |
+| *"Google sent an error page … see why in Apps Script → Executions"* | Open **Apps Script → Executions** (the ☰ icon on the left). The failed run shows the exact error — send it to us in an issue |
 | *"This hub needs an update"* | The website is newer than your Code.gs. See **Updating** above |
 | Setup says *"That is not the Google Sheet this hub runs on"* | Paste the address of the Sheet whose **Extensions → Apps Script** you deployed |
 | Setup says the hub is *already set up* | Use your admin link. Lost it? In the Sheet: **Haven Hub → Show admin links** |

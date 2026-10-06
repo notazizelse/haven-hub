@@ -15,7 +15,7 @@
  * The URL stays the same. Secrets never go in this file: personal tokens live in the Sheet, the bot token in Script properties.
  */
 
-const HUB_VERSION = '5.1.0';
+const HUB_VERSION = '5.1.1';
 // On your own server (server/index.mjs) this same file runs on Node; HUB_SERVER is then provided by the server.
 const SELF_HOSTED = typeof HUB_SERVER !== 'undefined' && !!HUB_SERVER;
 const DEFAULT_SITE = 'https://notazizelse.github.io/haven-hub';
@@ -2046,11 +2046,26 @@ const ACTIONS = {
 ACTIONS.add = ACTIONS['task.add'];   // v3 names
 ACTIONS.edit = ACTIONS['task.edit'];
 
-function doGet(e) { return json_(dispatch_((e && e.parameter) || {}, 'GET')); }
+function doGet(e) { return answer_(() => dispatch_((e && e.parameter) || {}, 'GET')); }
 function doPost(e) {
-  let b;
-  try { b = JSON.parse(e.postData.contents); } catch (err) { return json_({ ok: false, error: 'Bad request' }); }
-  return json_(dispatch_(b || {}, 'POST'));
+  return answer_(() => {
+    let b;
+    try { b = JSON.parse(e.postData.contents); } catch (err) { return { ok: false, error: 'Bad request' }; }
+    return dispatch_(b || {}, 'POST');
+  });
+}
+/** Always answer with JSON. An error that escaped (even while writing the answer) would make Google send its own HTML error page,
+ *  and the website could only guess what went wrong. */
+function answer_(fn) {
+  let out;
+  try { out = fn(); } catch (err) {
+    try { report_('Error', 'request: ' + String(err && err.stack || err)); } catch (e2) { /* ignore */ }
+    out = { ok: false, error: 'Something went wrong on the server: ' + String(err && err.message || err).slice(0, 200) };
+  }
+  try { return json_(out); } catch (err) {
+    try { report_('Error', 'answer: ' + String(err && err.stack || err)); } catch (e2) { /* ignore */ }
+    return json_({ ok: false, error: 'The hub did the work but could not write its answer. Refresh the page to see the result.' });
+  }
 }
 function dispatch_(q, method) {
   resetMemo_();
