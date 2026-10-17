@@ -20,7 +20,7 @@ const ROLES = [
     pages: [['grid', 'Overview', 'progress, overdue, milestones'], ['clock', 'Timeline + Scorecards', 'read-only'], ['calendar', 'Calendar + Team', 'read-only']] },
   { k: 'public', t: 'Public page', who: 'participants, parents, schools', shot: 'public', as: 'guest', r: '',
     say: 'Your event\'s page — no account needed. Put it in your bio and on posters.',
-    pages: [['flag', 'Countdown + dates', 'and your HQ signup link'], ['gift', 'Supported by', 'your sponsors\' logos, grouped by kind'], ['award', 'Getting ready', 'your organizing progress, public milestones, signups so far (if you want)'], ['userPlus', 'Apply to join', 'in English, Uzbek or Russian, with “Sign up with Google”']] },
+    pages: [['flag', 'Countdown + dates', 'and your HQ signup link'], ['gift', 'Supported by', 'a moving strip of your sponsors\' logos, the full wall, and a “Sponsor us” button'], ['message', 'Follow along', 'Instagram, Telegram, TikTok, YouTube and your GitHub org for the games — plus signups so far (if you want)'], ['userPlus', 'Apply to join', 'in English, Uzbek or Russian, with “Sign up with Google”']] },
 ];
 const FEATURES = [
   ['tasks', 'Tasks people actually finish', 'Every task has a why, the steps, a deadline and who to ask. One button each for Start, Done (with a photo, file or link as proof) and “I\'m blocked” — which reaches the leads instantly.'],

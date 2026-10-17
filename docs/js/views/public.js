@@ -21,6 +21,39 @@ export function sponsorWall(list) {
     return href ? `<a class="sp" href="${esc(href)}" target="_blank" rel="noopener sponsored" title="${esc(sp.name)}">${inner}</a>` : `<span class="sp" title="${esc(sp.name)}">${inner}</span>`;
   }).join('')}</div>`;
 }
+/** The band under the hero: every sponsor's logo in an endless strip (a still, centred row for a few sponsors or with reduced motion). */
+export function sponsorMarquee(list, label) {
+  if (!list || !list.length) return '';
+  const still = list.length <= 4;
+  const items = hidden => list.map(sp => {
+    const href = safeUrl(sp.link), logo = safeImg(sp.logo);
+    const inner = logo ? `<img src="${esc(logo)}" alt="${hidden ? '' : esc(sp.name)}" loading="lazy" referrerpolicy="no-referrer">` : `<b>${esc(sp.name)}</b>`;
+    return href ? `<a class="mq-i" href="${esc(href)}" target="_blank" rel="noopener sponsored" title="${esc(sp.name)}"${hidden ? ' tabindex="-1"' : ''}>${inner}</a>` : `<span class="mq-i" title="${esc(sp.name)}">${inner}</span>`;
+  }).join('');
+  return `<section class="sp-band${still ? ' still' : ''}" aria-label="${esc(label)}"><div class="sp-band-in"><span class="sp-band-l">${icon('gift')} ${esc(label)}</span>
+    <div class="mq"><div class="mq-track" style="--n:${list.length}"><div class="mq-g">${items(false)}</div>${still ? '' : `<div class="mq-g" aria-hidden="true">${items(true)}</div>`}</div></div></div></section>`;
+}
+/** "@haven.tashkent" from https://instagram.com/haven.tashkent — what the reader will search for on that platform. */
+function handleOf(kind, url) {
+  if (kind === 'email') return url;
+  let u; try { u = new URL(url); } catch (e) { return url; }
+  const seg = u.pathname.split('/').filter(Boolean), host = u.hostname.replace(/^www\./, '');
+  if (kind === 'website') return host + (seg.length ? '/' + seg.join('/') : '');
+  const h = (kind === 'youtube' ? seg.find(s => s[0] === '@') || seg[seg.length - 1] : seg[0]) || '';
+  if (!h) return host;
+  return kind === 'github' ? h : '@' + h.replace(/^@/, '');
+}
+const SOCIALS = [['instagram', 'Instagram'], ['telegram', 'Telegram'], ['tiktok', 'TikTok'], ['youtube', 'YouTube'], ['github', 'GitHub'], ['website', 'Website', 'globe'], ['email', 'Email', 'mail']];
+/** "Follow along": one big card per link the hub filled in. */
+function socialCards(L, t) {
+  const cards = SOCIALS.map(([k, name, ic]) => {
+    const href = k === 'email' ? (L.email ? 'mailto:' + L.email : '') : safeUrl(L[k]);
+    if (!href) return '';
+    return `<a class="soc soc-${k}" href="${esc(href)}"${k === 'email' ? '' : ' target="_blank" rel="noopener"'}><span class="soc-ic">${icon(ic || k)}</span>
+      <span class="soc-t"><b>${esc(name)}</b><span class="soc-h">${esc(handleOf(k, k === 'email' ? L.email : href))}</span><span class="soc-d">${esc(t('soc_' + k))}</span></span><span class="soc-go">${icon('arrow')}</span></a>`;
+  }).filter(Boolean);
+  return cards.length ? `<section class="card"><div class="card-h"><h3>${esc(t('follow'))}</h3><span class="sub">${esc(t('followSub'))}</span></div><div class="soc-grid">${cards.join('')}</div></section>` : '';
+}
 const gButton = (id, label) => `<button type="button" class="btn gbtn lg" id="${id}">${googleG} ${esc(label)}</button>`;
 const startGoogle = (ctx, cid, purpose, back) => { if (ctx.api.DEMO) return toast('Google sign-in is switched off in the demo.', 'err'); if (!googleStart(cid, purpose, { back })) toast('Your browser blocked this — allow cookies/storage for this site and try again.', 'err'); };
 const wireLang = (root, again) => root.querySelectorAll('[data-lang]').forEach(b => { b.onclick = () => { setLang(b.dataset.lang); again(); }; });
@@ -36,44 +69,39 @@ export async function publicPage(root, ctx) {
   const ev = P.event, L = P.links || {}, tz = P.tz;
   document.title = ev.name + ' — Hack Club Haven';
   document.documentElement.lang = lang;
-  const cta = [
-    safeUrl(L.signup) && `<a class="btn accent lg" href="${esc(safeUrl(L.signup))}" target="_blank" rel="noopener">${icon('zap')} ${esc(t('signup'))}</a>`,
-    safeUrl(L.instagram) && `<a class="btn ghost" href="${esc(safeUrl(L.instagram))}" target="_blank" rel="noopener">Instagram</a>`,
-    safeUrl(L.telegram) && `<a class="btn ghost" href="${esc(safeUrl(L.telegram))}" target="_blank" rel="noopener">Telegram</a>`,
-    safeUrl(L.website) && `<a class="btn ghost" href="${esc(safeUrl(L.website))}" target="_blank" rel="noopener">Website</a>`,
-    L.email && `<a class="btn ghost" href="mailto:${esc(L.email)}">${icon('mail')} ${esc(L.email)}</a>`,
-  ].filter(Boolean).join('');
-  let main = '';
+  const cta = P.enabled && safeUrl(L.signup) ? `<a class="btn accent lg" href="${esc(safeUrl(L.signup))}" target="_blank" rel="noopener">${icon('zap')} ${esc(t('signup'))}</a>` : '';
+  let main = '', band = '';
   if (P.enabled) {
-    const pr = P.progress, pct = pr && pr.total ? Math.round(100 * pr.done / pr.total) : 0, su = P.signups;
+    const su = P.signups, sp = P.sponsors || [], parts = [];
+    band = sponsorMarquee(sp, t('marquee'));
+    const ask = L.email ? `<div class="card sp-cta"><div class="fi">${icon('gift')}</div><div><h3>${esc(t('becomeSponsor', { event: ev.name }))}</h3><p class="muted">${esc(t('becomeSponsorText'))}</p></div>
+      <a class="btn primary" href="mailto:${esc(L.email)}?subject=${encodeURIComponent(t('sponsorSubject', { event: ev.name }))}">${icon('mail')} ${esc(t('becomeSponsorBtn'))}</a></div>` : '';
+    if (sp.length) parts.push(`<section class="card sp-card"><div class="card-h"><h3>${esc(t('supported'))}</h3><span class="sub">${esc(t('supportedSub', { event: ev.name }))}</span></div>${sponsorWall(sp)}</section>`);
+    parts.push(ask, socialCards(L, t));
     const left = [];
     if (su) left.push(`<div class="card"><div class="card-h"><h3>${esc(t('signups'))}</h3><span class="sub">${esc(t('signupsSub'))}</span></div>
       <div class="row" style="align-items:flex-end;gap:14px;margin-bottom:10px"><span class="big-pct">${esc(su.total)}</span>${su.goal ? `<span class="muted" style="padding-bottom:6px">${esc(t('ofGoal', { goal: su.goal }))}</span>` : ''}</div>${su.goal ? bar(100 * su.total / su.goal) : ''}</div>`);
-    if (P.sponsors && P.sponsors.length) left.push(`<div class="card sp-card"><div class="card-h"><h3>${esc(t('supported'))}</h3><span class="sub">${esc(t('supportedSub', { event: ev.name }))}</span></div>${sponsorWall(P.sponsors)}</div>`);
-    if (pr) left.push(`<div class="card"><div class="card-h"><h3>${esc(t('ready'))}</h3><span class="sub">${esc(t('readySub'))}</span></div>
-      <div class="row" style="align-items:flex-end;gap:14px;margin-bottom:10px"><span class="big-pct">${pct}%</span><span class="muted" style="padding-bottom:6px">${esc(t('tasksDone', { done: pr.done, total: pr.total }))}</span></div>${bar(pct)}
-      ${pr.milestones.length ? `<ul class="mile-list" style="margin-top:12px">${pr.milestones.map(m => `<li><span class="mk ${m.done ? 'done' : ''}">${icon(m.done ? 'check' : 'flag')}</span><div><b>${esc(m.label)}</b><div class="small muted">${esc(fmtDay(m.date))}</div></div></li>`).join('')}</ul>` : ''}</div>`);
-    if (P.team && P.team.length) left.push(`<div class="card"><div class="card-h"><h3>The team</h3><span class="sub">${P.team.length} teenagers making it happen</span></div><div class="cards" style="grid-template-columns:repeat(auto-fill,minmax(150px,1fr))">${P.team.map(p => `<div><b>${esc(p.name)}</b><div class="small muted">${esc(p.role || p.area || '')}</div></div>`).join('')}</div></div>`);
     left.push(`<div class="card"><div class="card-h"><h3>${esc(t('whatIs'))}</h3></div><p>${esc(t('whatIsText', { hc: '%HC%' })).replace('%HC%', HC)}</p>
       <p class="muted" style="margin:0">${esc(t('whatIsAges'))} <a href="https://haven.hackclub.com" target="_blank" rel="noopener">haven.hackclub.com</a></p></div>`);
     const join = P.join ? `<div class="card join-card"><h3 style="margin-bottom:6px">${esc(t('joinTitle'))}</h3><p class="muted">${esc(introIn(P, lang) || t('applyLede'))}</p>
       <a class="btn primary" href="#/apply">${icon('userPlus')} ${esc(t('joinBtn'))}</a></div>` : '';
-    main = `<div class="grid-2" style="align-items:start"><div class="stack">${left.join('')}</div><div class="stack">${join}
-      <div class="card"><h3 style="margin-bottom:6px">${esc(t('organizer'))}</h3><p class="muted">${esc(t('organizerText'))}</p><a class="btn ghost" href="#/signin">${icon('user')} ${esc(t('organizerBtn'))}</a></div></div></div>`;
+    parts.push(`<div class="grid-2" style="align-items:start"><div class="stack">${left.join('')}</div><div class="stack">${join}</div></div>`);
+    if (P.team && P.team.length) parts.push(`<section class="card team-strip"><h3>${esc(t('madeBy', { n: P.team.length }))}</h3><div class="team-chips">${P.team.map(p => `<span title="${esc(p.role || p.area || '')}">${esc(p.name)}</span>`).join('')}</div></section>`);
+    main = parts.join('');
   } else {
     main = `<div class="card" style="max-width:560px;margin:0 auto"><h3>${esc(t('organizer'))}</h3><p class="muted">${esc(t('organizerText'))}</p><a class="btn primary" href="#/signin">${esc(t('organizerBtn'))}</a></div>`;
   }
   const shared = (ctx.cfg.sharedSite || 'https://notazizelse.github.io/haven-hub').replace(/\/+$/, '');
   const tagline = textIn(ev.taglines, lang, ev.tagline);
   root.innerHTML = `<div class="pub"><header class="hero"><div class="hero-in">
-      <div class="hero-top"><img src="assets/logo-white.png" alt="Hack Club Haven" width="132" height="84"><div class="row">${langSwitch(avail, lang)}<a class="btn ghost sm" href="#/signin">${icon('user')} ${esc(t('organizers'))}</a></div></div>
+      <div class="hero-top"><img src="assets/logo-white.png" alt="Hack Club Haven" width="132" height="84"><div class="row">${langSwitch(avail, lang)}<a class="hero-signin" href="#/signin">${icon('user')} ${esc(t('organizerBtn'))}</a></div></div>
       <h1>${esc(ev.name)}</h1>
       <div class="when">${icon('calendar')} ${esc(dates(ev, lang))}${ev.city ? ` <span>· ${esc(ev.city)}</span>` : ''}</div>
       ${tagline ? `<p class="tagline">${esc(tagline)}</p>` : ''}
       <div class="countdown" id="cd" aria-live="off"></div>
-      <div class="row">${cta}</div></div></header>
-    <main class="pub-main">${main}</main>
-    <footer class="pub-foot">${esc(ev.name)} is part of <a href="https://haven.hackclub.com" target="_blank" rel="noopener">Hack Club Haven</a> · organized with <a href="${esc(shared)}/#/about" target="_blank" rel="noopener">Haven Hub</a> — <a href="${esc(shared)}/#/about" target="_blank" rel="noopener">run it for your Haven →</a> · <a href="privacy.html">Privacy</a></footer></div>`;
+      ${cta ? `<div class="row">${cta}</div>` : ''}</div></header>${band}
+    <main class="pub-main${band ? ' after-band' : ''}">${main}</main>
+    <footer class="pub-foot">${esc(ev.name)} is part of <a href="https://haven.hackclub.com" target="_blank" rel="noopener">Hack Club Haven</a> · organized with <a href="${esc(shared)}/#/about" target="_blank" rel="noopener">Haven Hub</a> — <a href="${esc(shared)}/#/about" target="_blank" rel="noopener">run it for your Haven →</a> · <a href="privacy.html">Privacy</a> · <a href="#/signin">${esc(t('organizerBtn'))}</a></footer></div>`;
   wireLang(root, () => publicPage(root, ctx));
   const start = parseLocal(ev.start + ' 09:00', tz), end = parseLocal((ev.end || ev.start) + ' 23:59', tz);
   const tick = () => {
