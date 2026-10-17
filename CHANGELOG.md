@@ -2,6 +2,13 @@
 
 A hub keeps working when the website is newer than its backend: new pages appear once the hub's `Code.gs` lists the feature. To update a Google Sheet hub, paste the new `Code.gs` and deploy a **new version** of the same deployment ([setup.md → Updating](setup.md#updating)); on your own server run `hubctl deploy`.
 
+## 5.2.0 — 2026-10-17
+
+- **Public page: sponsors first.** Right under the countdown, a band with every sponsor's logo slides by (it stops on hover, and with four or fewer sponsors or reduced motion it is a still row). Each logo links to the sponsor. The full *Supported by* wall follows, then a **Sponsor {event}** card that opens an email to your public address with the subject filled in. It's hidden when the hub has no public email.
+- **Follow along.** Instagram, Telegram, TikTok, YouTube, GitHub, your website and email are now big cards, each with the handle and one line about what people find there. GitHub is meant for your city's **GitHub organization**, where participants put their games' code. Only the links you fill in appear. New settings `tiktok`, `youtube`, `github` (Settings → Public page).
+- **Removed from the public page:** the *Getting ready* card (organizing progress + milestones) and the big *Organizer?* card. Organizer sign-in is now a small link in the hero and in the footer. The team (if `public_show_team` is on) is a compact row of first names, with the role on hover. The *Show organizing progress* switch is gone from Settings. `public_show_progress` still exists in the Sheet but the page no longer uses it.
+- ⚠️ New Uzbek and Russian texts on the public page need a native speaker's check.
+
 ## 5.1.0 — 2026-10-04
 
 - **Ambassadors.** Students who bring their school, each with a code and a link `<hub>/r/CODE` (a QR code on their poster). New page *Ambassadors* for everyone on the team: whoever adds an ambassador is their **buddy** and looks after them; leads see and change them all. *Add several*, *Send their page* (a ready Telegram message in the hub's languages), *Poster*, pause / left, channel codes (`IG`, `UZ1`… for a place rather than a person), *Sunday leaderboard* (top 5, first names only, to copy into the ambassadors' group). Applications has a new interest *School ambassador* and a *Make ambassador* button. The Overview shows an Ambassadors card.

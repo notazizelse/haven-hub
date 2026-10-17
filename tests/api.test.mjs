@@ -232,6 +232,11 @@ test('settings validation + public page privacy', () => {
   h.as(h.admin, { action: 'settings.save', values: { public_show_team: true } });
   pub = h.be.get({ action: 'public' });
   assert.deepEqual(pub.team.map(p => p.name), ['Ada']);
+  assert.equal(h.as(h.admin, { action: 'settings.save', values: { github: 'javascript:alert(1)' } }).ok, false, 'social links are links');
+  const soc = { tiktok: 'https://tiktok.com/@haven.springfield', youtube: 'https://youtube.com/@havenspringfield', github: 'https://github.com/haven-springfield' };
+  assert.equal(h.as(h.admin, { action: 'settings.save', values: soc }).ok, true);
+  pub = h.be.get({ action: 'public' });
+  assert.deepEqual({ tiktok: pub.links.tiktok, youtube: pub.links.youtube, github: pub.links.github }, soc, 'TikTok, YouTube and GitHub reach the public page');
   h.as(h.admin, { action: 'settings.save', values: { public_page: 'no' } });
   pub = h.be.get({ action: 'public' });
   assert.equal(pub.enabled, false); assert.equal(pub.progress, undefined);

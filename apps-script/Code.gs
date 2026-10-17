@@ -1,5 +1,5 @@
 /**
- * Haven Hub — the backend for one Haven's Team Hub.                                             v5.1.0
+ * Haven Hub — the backend for one Haven's Team Hub.                                             v5.2.0
  *
  * A Google Sheet is the database (you can edit it by hand). This script, bound to that Sheet, is:
  *   - the JSON API for the website  https://notazizelse.github.io/haven-hub/?hub=<your deployment id>
@@ -15,7 +15,7 @@
  * The URL stays the same. Secrets never go in this file: personal tokens live in the Sheet, the bot token in Script properties.
  */
 
-const HUB_VERSION = '5.1.0';
+const HUB_VERSION = '5.2.0';
 // On your own server (server/index.mjs) this same file runs on Node; HUB_SERVER is then provided by the server.
 const SELF_HOSTED = typeof HUB_SERVER !== 'undefined' && !!HUB_SERVER;
 const DEFAULT_SITE = 'https://notazizelse.github.io/haven-hub';
@@ -78,6 +78,9 @@ const SETTINGS = [
   ['instagram', '', 'Full Instagram URL'],
   ['telegram_channel', '', 'Full Telegram channel URL'],
   ['website', '', 'Any other public website'],
+  ['tiktok', '', 'Full TikTok URL'],
+  ['youtube', '', 'Full YouTube channel URL'],
+  ['github', '', 'GitHub organization URL, e.g. https://github.com/haven-yourcity — where participants put their games'],
   ['public_show_progress', 'yes', 'Public page shows % of organizing tasks done + public milestones'],
   ['public_show_team', 'no', 'Public page lists first names + roles (off by default — most of the team are minors)'],
   ['join_form', 'yes', 'Public "Join the team" form'],
@@ -119,7 +122,7 @@ function langsOf_(v) { const out = String(v || '').toLowerCase().split(/[\s,;]+/
 function texts_(key) { const S = S_(), o = {}; langsOf_(S.languages).forEach(l => { const v = l === 'en' ? S[key] : S[key + '_' + l]; if (v) o[l] = v; }); if (!o.en && S[key]) o.en = S[key]; return o; }
 const YESNO = ['weekly_report', 'email_reminders', 'done_alerts', 'group_done_posts', 'change_alerts', 'public_page', 'public_show_progress', 'public_show_team', 'join_form', 'self_claim',
   'public_show_signups', 'feed_signups', 'feed_applications', 'feed_files'];
-const URL_KEYS = ['site_url', 'signup_url', 'instagram', 'telegram_channel', 'website', 'moved_to', 'ambassador_group'];
+const URL_KEYS = ['site_url', 'signup_url', 'instagram', 'telegram_channel', 'website', 'tiktok', 'youtube', 'github', 'moved_to', 'ambassador_group'];
 
 /** Optional starter checklist added at setup. Days are relative to event_start. Edit or delete freely. */
 const STARTER = {
@@ -2103,7 +2106,7 @@ function apiPublic_() {
   const tasks = rows_('Tasks').filter(t => t.status !== 'Dropped'), done = tasks.filter(t => t.status === 'Done').length;
   return Object.assign(base, {
     enabled: true,
-    links: { signup: S.signup_url, email: S.city_email, instagram: S.instagram, telegram: S.telegram_channel, website: S.website },
+    links: { signup: S.signup_url, email: S.city_email, instagram: S.instagram, telegram: S.telegram_channel, tiktok: S.tiktok, youtube: S.youtube, github: S.github, website: S.website },
     progress: S.public_show_progress === 'yes' ? { done: done, total: tasks.length, milestones: milestones_().filter(m => m.public).map(m => ({ date: m.date, label: m.label, done: m.done })) } : null,
     team: S.public_show_team === 'yes' ? team_().map(p => ({ name: first_(p), role: p.role, area: p.area })) : null,
     join: S.join_form === 'yes' ? { intro: S.join_intro, intros: texts_('join_intro'), channel: S.telegram_channel || '' } : null,

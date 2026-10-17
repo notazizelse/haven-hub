@@ -112,8 +112,10 @@ export function settings(ctx) {
       <div class="form-grid">${field({ label: 'Public email', name: 'city_email', type: 'email', value: S.city_email, placeholder: 'yourcity@haven.hackclub.com' })}
       ${field({ label: 'Instagram link', name: 'instagram', type: 'url', value: S.instagram, placeholder: 'https://instagram.com/haven.yourcity.hackclub' })}
       ${field({ label: 'Telegram channel link', name: 'telegram_channel', type: 'url', value: S.telegram_channel, placeholder: 'https://t.me/…' })}
+      ${field({ label: 'TikTok link', name: 'tiktok', type: 'url', value: S.tiktok, placeholder: 'https://tiktok.com/@…' })}
+      ${field({ label: 'YouTube channel link', name: 'youtube', type: 'url', value: S.youtube, placeholder: 'https://youtube.com/@…' })}
+      ${field({ label: 'GitHub organization', name: 'github', type: 'url', value: S.github, placeholder: 'https://github.com/haven-yourcity', hint: 'Where participants put their games\' code.' })}
       ${field({ label: 'Other website', name: 'website', type: 'url', value: S.website })}</div>
-      ${field({ label: 'Show organizing progress', name: 'public_show_progress', type: 'toggle', value: S.public_show_progress, hint: '% of tasks done + milestones marked Public.' })}
       ${field({ label: 'Show the team (first names + roles)', name: 'public_show_team', type: 'toggle', value: S.public_show_team, hint: 'Most organizers are under 18 — ask the team before you turn this on.' })}
       ${field({ label: '“Join the team” form', name: 'join_form', type: 'toggle', value: S.join_form, hint: 'Answers land in Applications.' })}
       ${field({ label: 'Text above the form', name: 'join_intro', type: 'textarea', value: S.join_intro, attrs: 'rows="2" style="min-height:60px"' })}`)}

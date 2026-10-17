@@ -84,7 +84,8 @@ export function seed(be, gas, hub) {
     { date: day(43).slice(0, 10), time: '20:00', where: 'Telegram voice (20 min)', what: 'Everyone confirms role + arrival time' }] }), 'meetings');
   const me = be.get(Object.assign({ action: 'me' }, admin));
   ok(as(admin, { action: 'list.save', tab: 'Milestones', rows: me.milestones.map((m, i) => Object.assign({}, m, { public: m.public || i === 0, done: i === 0 })).concat([{ date: day(-10).slice(0, 10), label: 'Signups open', kind: 'event', public: true, done: true }]) }), 'milestones');
-  ok(as(admin, { action: 'settings.save', values: { instagram: 'https://instagram.com/haven.springfield.hackclub', city_email: 'springfield@haven.hackclub.com', google_client_id: 'demo-only.apps.googleusercontent.com' } }), 'settings'); // shows the Google buttons (the demo never calls Google)
+  ok(as(admin, { action: 'settings.save', values: { instagram: 'https://instagram.com/haven.springfield.hackclub', telegram_channel: 'https://t.me/havenspringfield',
+    tiktok: 'https://www.tiktok.com/@haven.springfield', youtube: 'https://www.youtube.com/@havenspringfield', github: 'https://github.com/haven-springfield', city_email: 'springfield@haven.hackclub.com', google_client_id: 'demo-only.apps.googleusercontent.com' } }), 'settings'); // shows the Google buttons (the demo never calls Google)
   // v5: languages, invites, signups, applications in three languages, the inbox, an upload
   ok(as(admin, { action: 'settings.save', values: { signin_mode: 'invite', languages: 'en,uz,ru', signup_goal: '180', funding_per_signup: '7.5', public_show_signups: 'yes',
     tagline_uz: 'Ikki kun. Bitta oʻyin. Oʻzing yasaysan.', tagline_ru: 'Два дня. Одна игра. Сделанная тобой.' } }), 'v5 settings');

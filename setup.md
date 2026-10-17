@@ -7,7 +7,7 @@ Haven Hub gives your organizing team:
 - **A task list for every organizer.** Steps, a deadline, who to ask, and one button each for **Start**, **Done** (with a photo, file or link as proof) and **I'm blocked**.
 - **An admin dashboard for you.** It has an overview, an all-tasks table with bulk edits and CSV import, proof review, a timeline, scorecards, and people management.
 - **Reminders.** People get one the evening before each deadline, by email and/or a Telegram bot. Leads get instant BLOCKED alerts and a weekly report.
-- **A public page for your event** in English, Uzbek or Russian. It shows a countdown, your signup link, your organizing progress (and your signup count, if you like) and links to the **Apply** page.
+- **A public page for your event** in English, Uzbek or Russian. It shows a countdown, your signup link, your sponsors (a moving logo strip, the full wall and a “Sponsor us” button), your Instagram, Telegram, TikTok, YouTube and GitHub (and your signup count, if you like) and links to the **Apply** page.
 - **Signups, the group feed and an inbox.** Track HQ's signup count and the funding it earns, let the organizer group hear about new signups, applications and files, and see new emails to your city address in one list.
 - **Guest links.** HQ, a mentor or a sponsor can get a read-only view of your progress.
 - **A team page with a page per person** — photos, roles, their work and their latest activity.
